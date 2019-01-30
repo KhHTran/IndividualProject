@@ -12,6 +12,15 @@ contract Entity {
 	}
 
 	function removeEntity(uint _enityID, MemoryInterface _memory) external {
+		this.freeDeposit(_entityID,_memory);
+	}
 
+	function freeDeposit(uint _entityID, MemoryInterface _memory) external {
+		uint deposit = EntityMemory.getDeposit(_entityID,_memory);
+		address depositor = EntityMemory.getDepositor(_entityID,_memory);
+		EntityMemory.setDeposit(_entityID,0,_memory);
+		/*
+		ToDo: recalculate the deposit balance
+		*/
 	}
 }

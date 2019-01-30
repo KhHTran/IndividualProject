@@ -16,12 +16,16 @@ contract EntityMemory {
 
 	function registerDeposit(uint _entityID, uint _deposit, MemoryInterface _memory) external {
 		byte32 key = keccak256(abi.encodePacked("EntityID",_entityID,"Deposit"));
-		mem.setUnsignInteger(key,deposit);
+		_memory.setUnsignInteger(key,deposit);
 	}
 
 	function getDeposit(uint _entityID, MemoryInterface _memory) external view returns(uint _deposit) {
 		byte32 key = keccak256(abi.encodePacked("EntityID",_entityID,"Deposit"));
 		_deposit = _memory.getUnsignInteger(key);
+	}
+
+	function setDeposit((uint _entityID, uint _deposit, MemoryInterface _memory) external {
+		this.registerDepositor(_entityID,_deposit,_memory)
 	}
 
 	function registerDepositor(uint _entityID, address _depositor, MemoryInterface _memory) external {
@@ -31,6 +35,6 @@ contract EntityMemory {
 
 	function getDepositor(uint _entityID, MemoryInterface _memory) external view returns(address _depositor) {
 		byte32 key = keccak256(abi.encodePacked("EntityID",_entityID,"Depositor"));
-		_depositor = mem.getAddress(key);
+		_depositor = _memory.getAddress(key);
 	}
 }
