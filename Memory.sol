@@ -2,12 +2,11 @@ pragma solidity ^0.4.24;
 
 import "./Owned.sol";
 import "./interfaces/MemoryInterface.sol";
-import "./interfaces/EIP20.sol";
+import "./Token.sol";
 
-contract Memory is Owned, MemoryInterface {
-	bytes32 constant tokenKey = keccak256(abi.encodePacked("ERC20 Address")); 
+contract Memory is Owned, MemoryInterface { 
 	modifier isAllowed(string _type) {
-		require(msg.sender == owner || allowedAccess[encrypt(msg.sender,_type)], true);
+		require(msg.sender == owner || allowedAccess[encrypt(msg.sender,_type)], "Action not allowed");
 		_;
 	}
 
@@ -72,13 +71,11 @@ contract Memory is Owned, MemoryInterface {
 	}
 
 	function transfer(address _to, uint _value) external isAllowed("transfer token") {
-		EIP20 token = EIP20(this.getAddress(tokenKey));
-		assert(token.transfer(_to,_value));
+		assert(Token.transfer(_to,_value));
 	}
 
 	function transferFrom(address _from, uint _value) external isAllowed("transfer token") {
-		EIP20 token = EIP20(this.getAddress(tokenKey));
-		assert(token.transferFrom(_from,this,_value));
+		assert(Token.transferFrom(_from,this,_value));
 	}
 
 	// allow and decline access can only be done by owner
