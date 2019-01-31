@@ -7,11 +7,11 @@ import "./Entity.sol";
 
 contract MemberLib {
 	byte32 const primeType = keccak256(abi.encodePacked("Prime"));
-	byte32 const sencodType = keccak256(abi.encodePacked("Second"));
+	byte32 const secondType = keccak256(abi.encodePacked("Second"));
 
 	modifier correctType(string _type) {
 		byte32 typeEncoded = keccak256(abi.encodePacked(_type));
-		bool compare = typeEncoded == primeType || typeEncoded == sencodType;
+		bool compare = typeEncoded == primeType || typeEncoded == secondType;
 		require(compare, "Member type not correct");
 		_;
 	}
