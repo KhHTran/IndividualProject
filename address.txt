@@ -1,0 +1,2 @@
+0x6c06726d1c03fab198f3792a3bedbe385545e704 IPMemory
+0x2e0767465029cfc67a43ee33f8eae3c9a83ad76d MemberManager
