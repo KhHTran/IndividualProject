@@ -1,11 +1,8 @@
 pragma solidity ^0.4.24;
 
 contract IPMemory {
-	address public owner;
-	function TicketManagementSystem() public {
-		owner = msg.sender;
-	}
-
+	address public owner = msg.sender;
+	
 	mapping(bytes32 => address) private addressMap;
 	mapping(bytes32 => uint) private uintMap;
 	mapping(bytes32 => bytes32) private bytes32Map;
