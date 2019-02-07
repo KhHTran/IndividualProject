@@ -21,7 +21,7 @@ contract IPMemory {
 	function getAddress(bytes32 _key) external view returns(address) {
 		return addressMap[_key];
 	}
-	function getBoolean(bytes32 _key) external view returns(bool) {
+	function getBool(bytes32 _key) external view returns(bool) {
 		return boolMap[_key];
 	}
 	function storeString(bytes32 _key, string _value) external {
