@@ -47,8 +47,11 @@ contract MemoryTest {
 		return address(0) == mem.getAddress(_key);
 	}
 
-	function run() external view returns(bool) {
+	function run() external {
 		result = this.testAddress() && this.testBytes32() && this.testBool() && this.testString() && this.testUint();
+	}
+
+	function getResult() external view returns(bool) {
 		return result;
 	}
 }
