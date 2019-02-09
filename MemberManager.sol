@@ -4,7 +4,7 @@ import "./IPMemory.sol";
 
 contract MemberManager {
 	IPMemory mem;
-	address public owner;
+	address owner = msg.sender;
 	bytes32 constant primaryHash = keccak256(abi.encodePacked("Primary"));
 	bytes32 constant secondaryHash = keccak256(abi.encodePacked("Secondary"));
 	event MemberRegistered(address _member, string _type);
@@ -26,9 +26,8 @@ contract MemberManager {
 		_;
 	}
 
-	function MemberManager(address _mem) public {
+	function setMemoryContract(address _mem) external onlyOwner() {
 		mem = IPMemory(_mem);
-		owner = msg.sender;
 	}
 
 	function encrypt(address _address, string _string) internal returns(bytes32) {

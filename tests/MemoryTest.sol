@@ -5,8 +5,12 @@ import "../IPMemory.sol";
 contract MemoryTest {
 	IPMemory mem;
 	bool result;
-
-	function MemoryTest(address _mem) public {
+	adress owner = msg.sender;
+	modifier onlyOwner() {
+		require(msg.sender == owner, "Not authorised");
+		_;
+	}
+	function setMemoryContract(address _mem) external onlyOwner() {
 		mem = IPMemory(_mem);
 	}
 
