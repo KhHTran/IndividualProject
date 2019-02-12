@@ -21,7 +21,7 @@ contract MemberTest {
 
 	function testRegisterMemberAndGetData() external returns(bool){
 		address _member = address(0);
-		string _metadata = "Metadata for test member 0x0";
+		string memory _metadata = "Metadata for test member 0x0";
 		bytes32 _metaHash = keccak256(abi.encodePacked(_metadata));
 		memMan.registerMember(_member,"Primary",_metadata);
 		bytes32 _key = keccak256(abi.encodePacked(_member,"Primary"));
@@ -35,10 +35,10 @@ contract MemberTest {
 	}
 
 	function testUpdateMember() external returns(bool){
-		string _metadata = "New _metadata for test member 0x0";
+		string memory _metadata = "New _metadata for test member 0x0";
 		bytes32 _metaHash = keccak256(abi.encodePacked(_metadata));
-		memMan.updataMemberData(address(0),"Primary",_metadata)
-		bool x = _metaHash == memMan.getMemberData(address(0),"Primary");
+		memMan.updataMemberData(address(0),"Primary",_metadata);
+		bool x = _metaHash == keccak256(abi.encodePacked(memMan.getMemberData(address(0),"Primary")));
 		return x;
 	}
 

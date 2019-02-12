@@ -5,7 +5,7 @@ import "../IPMemory.sol";
 contract MemoryTest {
 	IPMemory mem;
 	bool result;
-	adress owner = msg.sender;
+	address owner = msg.sender;
 	modifier onlyOwner() {
 		require(msg.sender == owner, "Not authorised");
 		_;
@@ -15,29 +15,29 @@ contract MemoryTest {
 	}
 
 	function testUint() external returns(bool){
-		string k = "test uint Memory";
+		string memory k = "test uint Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeUint(_key,2310);
 		return 2310 == mem.getUint(_key);
 	}
 
 	function testString() external returns(bool){
-		string k = "test string Memory";
+		string memory k = "test string Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeString(_key,"String tested");
 		return keccak256(abi.encodePacked("String tested")) == keccak256(abi.encodePacked(mem.getString(_key)));
 	}
 
 	function testBool() external returns(bool){
-		string k = "test bool Memory";
+		string memory k = "test bool Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeBool(_key,true);
 		return mem.getBool(_key);
 	}
 
 	function testBytes32() external returns(bool) {
-		string k = "test bytes32 Memory";
-		string tmp = "expected result";
+		string memory k = "test bytes32 Memory";
+		string memory tmp = "expected result";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		bytes32 _val = keccak256(abi.encodePacked(tmp));
 		mem.storeBytes32(_key,_val);
@@ -45,7 +45,7 @@ contract MemoryTest {
 	}
 
 	function testAddress() external returns(bool){
-		string k = "test address Memory";
+		string memory k = "test address Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeAddress(_key,address(0));
 		return address(0) == mem.getAddress(_key);
