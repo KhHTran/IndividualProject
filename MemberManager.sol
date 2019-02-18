@@ -34,17 +34,17 @@ contract MemberManager {
 		return keccak256(abi.encodePacked(_address,_string));
 	}
 
-	function registerMember(address _member, string _type, string _metadata) 
+	function registerMember(string _type, string _metadata) 
 	external 
-	memberNotRegistered(_member,_type) {
+	memberNotRegistered(msg.sender,_type) {
 	    bytes32 hash = keccak256(abi.encodePacked(_type));
 		require(hash == primaryHash || hash == secondaryHash,"Member type should be Primary or Secondary");
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
-		bytes32 crypt = encrypt(_member,_type);
+		bytes32 crypt = encrypt(msg.sender,_type);
 		mem.storeUint(crypt,1);
-		crypt = keccak256(abi.encodePacked(_member,_type,"Metadata"));
+		crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
-		emit MemberRegistered(_member,_type);
+		emit MemberRegistered(msg.sender,_type);
 	}
 
 	function getMemberData(address _member, string _type) external
@@ -53,11 +53,11 @@ contract MemberManager {
 		return mem.getString(crypt);
 	}
 
-	function updataMemberData(address _member, string _type, string _metadata) 
+	function updataMemberData(string _type, string _metadata) 
 	external 
-	memberRegistered(_member,_type) {
+	memberRegistered(msg.sender,_type) {
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
-		bytes32 crypt = keccak256(abi.encodePacked(_member,_type,"Metadata"));
+		bytes32 crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
 	}
 }
