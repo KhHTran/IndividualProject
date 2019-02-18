@@ -11,7 +11,11 @@ contract EventManager {
 		require(owner == msg.sender, "Not authorised")
 	}
 
-	modifier onlyInTrading(uint _eventID) {
+	modifier onlyPrimary() {
+		require(msg.sender == owner || isPrimary(msg.sender), "Not authorised for non Primary Member");
+		_;
+	}
+	modifier eventInTrading(uint _eventID) {
 		require(getEventStatus(_eventID) == Trading, "Event is not in trading");
 		_;
 	}
@@ -31,6 +35,12 @@ contract EventManager {
 		_;
 	}
 
+	modifier legalEventTime(uint _start, uint _end) {
+		uint current = now;
+		require(current < _start && _start < _end, "Event start need to be in the future and end after start");
+		_;
+	}
+
 	function setMemoryContract(address _memAddress) external onlyOwner() {
 		mem = IPMemory(_memAddress);
 	}
@@ -39,28 +49,46 @@ contract EventManager {
 		return keccak256(abi.encodePacked(_address,_string));
 	}
 
-	function registerEvent(string _name, string _url, uint _start, uint _end, uint _ticketPrice, bytes _signature) 
-	external {
-		require(_start < _end, "the ticket sale end must be later than the begining");
+	function isPrimary(address _member) internal returns(bool) {
+		bytes32 _key = encrypt(_member,'Primary');
+		return mem.getUint(_key) != 0;
+	}
+
+	function getEventHash(uint _eventID) internal returns(bytes32) {
+		bytes32 _key = keccak256(abi.encodePacked(_eventID,"Event Hash"));
+		return mem.getBytes32(_key);
+	}
+
+	function registerEvent(string _name, string _url, uint _start, uint _end, uint _ticketPrice, bytes _signature)
+	external onlyPrimary() legalEventTime(_start,_end) {
+		require(bytes(_name).length > 0, "Name length is 0");
+		require(bytes(_url).length > 0, "URL length is 0");
+		require(_ticketPrice < 0, "Ticket price is negative");
 		bytes32 eventHash = keccak256(abi.encodePacked(_name,_url,_start,_end,_ticketPrice));
+		address signer = getSigner(eventHash,_signature);
+		require(msg.sender == signer, "Signer is not sender");
 		bytes32 _key = keccak256(abi.encodePacked(eventHash,"Event Active Status"));
 		require(mem.getUint(_key) == 0, "Event existed");
 		mem.storeUint(_key,1);
-		eventID = count + 1;
-		bytes32 _key = keccak256(abi.encodePacked(eventID,"Event Start"));
-		mem.storeUint(_key,_start);
-		bytes32 _key = keccak256(abi.encodePacked(eventID,"Event End"));
-		mem.storeUint(_key,_end);
-		bytes32 _key = keccak256(abi.encodePacked(eventID,"Ticket Price"));
-		mem.storeUint(_key,_ticketPrice);
-		address eventOwner = getSigner(eventHash, _signature);
-		require(eventOwner != address(0), "Address can not be extracted from signature");
-		require(mem.getUint(eventOwner,"Primary") != 0, "Event owner must be primary member");
-		bytes32 _key = keccak256(abi.encodePacked(eventID,"Event Owner"));
 		count += 1;
+		eventID = count;
+		_key = keccak256(abi.encodePacked(eventID,"Event Start"));
+		mem.storeUint(_key,_start);
+		_key = keccak256(abi.encodePacked(eventID,"Event End"));
+		mem.storeUint(_key,_end);
+		_key = keccak256(abi.encodePacked(eventID,"Ticket Price"));
+		mem.storeUint(_key,_ticketPrice);
+		_key = keccak256(abi.encodePacked(eventID,"Event Owner"));
 		mem.storeAddress(_key,eventOwner);
 		_key = keccak256(abi.encodePacked(eventID,"Event Hash"));
 		mem.storeBytes32(_key,eventHash);
+	}
+
+	function cancelEvent(uint _eventID) external onlyPrimary() eventStillPending(eventID) {
+		require(msg.sender == owner || msg.sender == getEventOwner(_eventID), "Not authorised to cancel event");
+		bytes32 eventHash = getEventHash(_eventID);
+		bytes32 _key = keccak256(abi.encodePacked(eventHash,"Event Active Status"));
+		mem.storeUint(_key,0);
 	}
 
 	function getEventOwner(uint _eventID) internal returns(address) {
@@ -75,12 +103,12 @@ contract EventManager {
 
 	function getEventCloseTime(uint _eventID) internal returns(uint) {
 		bytes32 _key = keccak256(abi.encodePacked(eventID,"Event End"));
-		return mem.getUint();	
+		return mem.getUint();
 	}
 
 	function getEventStatus(uint _eventID) internal returns(EventStatus) {
 		uint currentTime = now;
-		bytes32 _key = keccak256(abi.encodePacked(mem.getBytes32(_eventID,"Event Hash"),"Event Active Status"));
+		bytes32 _key = keccak256(abi.encodePacked(getEventHash(_eventID),"Event Active Status"));
 		if (mem.getUint(_key) == 0) {
 			return NonExist;
 		}
@@ -98,36 +126,38 @@ contract EventManager {
 		return mem.getUint(_key) == 1;
 	}
 
-	function sellTicket(uint _eventID, address _buyer, string _ticketData, bytes _signature) external 
-	eventStillPending(_eventID) {
-		require(mem.getUint(_buyer,"Secondary") == 1,"Buyer is not registered");
-		bytes32 _hash = keccak256(abi.encodePacked(_eventID,_buyer,_ticketData));
-		address eventOwner = getSigner(_hash,_signature);
-		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,eventOwner,_ticketData)));
+	function buyTicket(uint _eventID, string _ticketData, bytes _signature) external 
+	eventInTrading(_eventID)
+	{
+		require(mem.getUint(msg.sender,"Secondary") == 1,"Buyer is not registered");
+		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,msg.sender,_ticketData)));
+		bytes ticketHash = keccak256(abi.encodePacked(_eventID,_ticketData));
+		address signer = getSigner(ticketHash, _signature);
+		require(msg.sender == signer, "Signer is not sender");
 		require(!activeTicket(_eventID,_ticketID),"ticket is already active");
 		bytes32 _key = keccak256(abi.encodePacked("Event-Ticket",_eventID,_ticketID));
 		mem.storeUint(_key,1);
 		_key = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
-		mem.storeAddress(_key,_buyer);
+		mem.storeAddress(_key,msg.sender);
 	}
 
 	function getSigner(bytes32 _hash, bytes _signature) internal returns(address) {
-		bytes32 ethSigned = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
-		if (ethSigned.length != 65) {
+		bytes32 _ethSigned = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
+		bytes32 r;
+		bytes32 s;
+		uint8 v;
+		if(_signature.length != 65) {
 			return address(0);
 		}
-		bytes32 _r;
-		bytes32 _s;
-		uint8 _v;
 		assembly {
-			_r := mload(add(_signature, 32))
-			_s := mload(add(_signature, 64))
-			_v := byte(0, mload(add(_signature, 96)))
+			r := mload(add(_signature,32))
+			s := mload(add(_signature,64))
+			v := byte(0, mload(add(_signature, 96)))
 		}
-		if (_v < 27) {
-			_v += 27;
+		if(v < 27) {
+			v += 27;
 		}
-		require(_v == 27 || _v == 28, "Incorrect signature version");
-		return ecrecover(ethSigned,_v,_r,_s);
+		require(v == 27 || v == 28, "Illegal signature version");
+		return ecrecover(_ethSigned,v,r,s);
 	}
 }
