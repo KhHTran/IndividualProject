@@ -1,12 +1,18 @@
 pragma solidity ^0.4.24;
 
 import "./IPMemory.sol";
+import "./Token.sol";
 
 contract EventManager {
 	enum EventStatus {Pending, Trading, Closed, NonExist};
-	uint count = 0;
+	enum AuctionStatus {Active, Closed, Ended};
+	uint countEvent = 0;
+	uint countAuction = 0;
 	IPMemory mem;
+	Token token;
 	address owner = msg.sender;
+	uint auctionTime = 3;
+
 	modifier onlyOwner() {
 		require(owner == msg.sender, "Not authorised")
 	}
@@ -35,6 +41,16 @@ contract EventManager {
 		_;
 	}
 
+	modifier ticketInListing(uint _eventID, uint _ticketID) {
+		require(ticketListed(_eventID,_ticketID),"Ticket is not listed");
+		_;
+	}
+
+	modifier ticketNotListed(uint _eventID, uint _ticketID) {
+		require(!ticketListed(_eventID,_ticketID),"Ticket already listed");
+		_;
+	}
+
 	modifier legalEventTime(uint _start, uint _end) {
 		uint current = now;
 		require(current < _start && _start < _end, "Event start need to be in the future and end after start");
@@ -43,6 +59,15 @@ contract EventManager {
 
 	function setMemoryContract(address _memAddress) external onlyOwner() {
 		mem = IPMemory(_memAddress);
+	}
+
+	function setTokenContract(address _tokenAddress) external onlyOwner() {
+		token = Token(_tokenAddress);
+	}
+
+	function setAuctionTimeLimit(uint _day) external onlyOwner() {
+		require(_day > 1, "Auction need at least a _day");
+		auctionTime = _day;
 	}
 
 	function encrypt(address _address, string _string) internal returns(bytes32) {
@@ -59,6 +84,31 @@ contract EventManager {
 		return mem.getBytes32(_key);
 	}
 
+	function ticketOwnership(uint _eventID, uint _ticketID, address _owner) internal returns(bool) {
+		bytes32 crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
+		return _owner == mem.getAddress(crypt);
+	}
+
+	function getTicketPrice(uint _eventID) internal returns(uint) {
+		bytes32 crypt = keccak256(abi.encodePacked(_eventID,"Ticket Price"));
+		return mem.getUint(crypt);
+	}
+
+	function getAuctionStatus(uint _auctionID) internal returns(AuctionStatus) {
+		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		bytes32 crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Start Time"));
+		uint _start = mem.getUint(crypt,current);
+		uint current = now;
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Active Status"));
+		if(mem.getUint(crypt) == 0) {
+			return Closed;
+		}
+		if(current > now + auctionTime*24*3600) {
+			return Ended;
+		}
+		return Active;
+	}
+
 	function registerEvent(string _name, string _url, uint _start, uint _end, uint _ticketPrice, bytes _signature)
 	external onlyPrimary() legalEventTime(_start,_end) {
 		require(bytes(_name).length > 0, "Name length is 0");
@@ -70,8 +120,8 @@ contract EventManager {
 		bytes32 _key = keccak256(abi.encodePacked(eventHash,"Event Active Status"));
 		require(mem.getUint(_key) == 0, "Event existed");
 		mem.storeUint(_key,1);
-		count += 1;
-		eventID = count;
+		countEvent += 1;
+		eventID = countEvent;
 		_key = keccak256(abi.encodePacked(eventID,"Event Start"));
 		mem.storeUint(_key,_start);
 		_key = keccak256(abi.encodePacked(eventID,"Event End"));
@@ -129,16 +179,92 @@ contract EventManager {
 	function buyTicket(uint _eventID, string _ticketData, bytes _signature) external 
 	eventInTrading(_eventID)
 	{
-		require(mem.getUint(msg.sender,"Secondary") == 1,"Buyer is not registered");
-		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,msg.sender,_ticketData)));
+		require(mem.getUint(encrypt(msg.sender,"Secondary")) == 1,"Buyer is not registered");
+		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,_ticketData)));
 		bytes ticketHash = keccak256(abi.encodePacked(_eventID,_ticketData));
 		address signer = getSigner(ticketHash, _signature);
 		require(msg.sender == signer, "Signer is not sender");
 		require(!activeTicket(_eventID,_ticketID),"ticket is already active");
 		bytes32 _key = keccak256(abi.encodePacked("Event-Ticket",_eventID,_ticketID));
 		mem.storeUint(_key,1);
-		_key = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
+		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Event Ticket Owner"));
 		mem.storeAddress(_key,msg.sender);
+	}
+
+	function listTicketForAuction(uint _eventID, uint _ticketID, uint _minimumPrice, bytes32 _signature) external
+	eventInTrading(_eventID) 
+	ticketNotListed(_eventID,_ticketID) {
+		bytes32 listHash = keccak256(abi.encodePacked(_ticketID,_eventID));
+		address signer = getSigner(listHash,_signature);
+		uint current = now;
+		require(signer == msg.sender, "Signer is not sender");
+		require(ticketOwnership(_ticketID,_eventID,msg.sender),"Sender is not ticket owner");
+		require(_minimumPrice > 0 && _minimumPrice < getTicketPrice(_eventID), "Minimum price is not legal");
+		require(current + auctionTime*24*3600 < getEventCloseTime(_eventID), "Not sufficient time for auction");
+		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
+		mem.storeUint(crypt,1);
+		uint auctionID = countAuction;
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Highest Bidder"));
+		mem.storeUint(crypt,msg.sender);
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Highest Bid"));
+		mem.storeUint(crypt,_minimumPrice);
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Start Time"));
+		mem.storeUint(crypt,current);
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Active Status"));
+		mem.storeUint(crypt,1);
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Event ID"));
+		mem.storeUint(crypt,_eventID);
+		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Ticket ID"));
+		mem.storeUint(crypt,_ticketID);
+		countAuction += 1;
+	}
+
+	function placeBids(uint _auctionID, uint _bid) external auctionStillOpen(_auctionID) {
+		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		uint maxPrice = getTicketPrice(_eventID);
+		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
+		uint currentTime = now;
+		require(_bid < maxPrice, "Resell price can not be >= original price");
+		require(_bid > currentPrice, "Resell price need to be > current bidding price");
+		require(!ticketOwnership(_eventID,_ticketID,msg.sender),"Owner cannot place bid");
+		require(bidder != msg.sender, "Highest bidder cannot rebid");
+		token.bookToken(_bid);
+		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bidder"));
+		mem.storeAddress(_key,msg.sender);
+		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bid"));
+		mem.storeUint(_key,_bid);
+	}
+
+	function endAuction(uint _auctionID) external auctionOwner(_auctionID) noBidPlaced(_auctionID) {
+		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
+		mem.storeUint(crypt,0);
+		bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Active Status"));
+		mem.storeUint(crypt,0);
+	}
+
+	function finishAuction(uint _auctionID) external auctionStillOpen(_auctionID) {
+		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
+		if(!ticketOwnership(_eventID,_ticketID,bidder)) {
+			require(msg.sender == bidder, "Only winner can close this auction");
+			bytes32 crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
+			address oldOwner = mem.getAddress(crypt);
+			token.transfer(oldOwner,bid);
+			token.freeBooking(msg.sender,bid);
+			bytes32 crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
+			mem.storeAddress(crypt,msg.sender);
+			crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
+			mem.storeUint(crypt,0);
+			crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Active Status"));
+			mem.storeUint(crypt,0);
+		}
+		else {
+			require(msg.sender == bidder, "Only ticket owner can close this auction");
+			bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
+			mem.storeUint(crypt,0);
+			bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Active Status"));
+			mem.storeUint(crypt,0);
+		}
 	}
 
 	function getSigner(bytes32 _hash, bytes _signature) internal returns(address) {

@@ -30,24 +30,29 @@ contract MemberManager {
 		mem = IPMemory(_mem);
 	}
 
-	function encrypt(address _address, string _string) internal returns(bytes32) {
+	function encrypt(address _address, string _string) internal pure returns(bytes32) {
 		return keccak256(abi.encodePacked(_address,_string));
 	}
 
-	function registerMember(string _type, string _metadata) 
-	external 
+	function registerMember(string _type, string _memberID ,string _metadata) 
+	external
 	memberNotRegistered(msg.sender,_type) {
 	    bytes32 hash = keccak256(abi.encodePacked(_type));
 		require(hash == primaryHash || hash == secondaryHash,"Member type should be Primary or Secondary");
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
+		require(bytes(_memberID).length > 0, "member ID needed to be provided");
 		bytes32 crypt = encrypt(msg.sender,_type);
 		mem.storeUint(crypt,1);
 		crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
+		crypt = keccak256(abi.encodePacked(msg.sender,_type,"Member ID"));
+		mem.storeString(crypt,_memberID);
+		crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
+		mem.storeAddress(crypt,msg.sender);
 		emit MemberRegistered(msg.sender,_type);
 	}
 
-	function getMemberData(address _member, string _type) external
+	function getMemberData(address _member, string _type) external view
 	memberRegistered(_member,_type) returns(string) {
 		bytes32 crypt = keccak256(abi.encodePacked(_member,_type,"Metadata"));
 		return mem.getString(crypt);
@@ -59,5 +64,11 @@ contract MemberManager {
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
 		bytes32 crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
+	}
+
+	function getMemberAddress(string _memberID) internal returns(address) {
+		require(bytes(_memberID).length > 0, "member ID needed to be provided");
+		crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
+		return mem.storeAddress(crypt);
 	}
 }
