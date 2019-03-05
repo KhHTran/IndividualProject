@@ -66,9 +66,9 @@ contract MemberManager {
 		mem.storeString(crypt,_metadata);
 	}
 
-	function getMemberAddress(string _memberID) internal returns(address) {
+	function getMemberAddress(string _memberID) internal view returns(address) {
 		require(bytes(_memberID).length > 0, "member ID needed to be provided");
-		crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
-		return mem.storeAddress(crypt);
+		bytes32 crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
+		return mem.getAddress(crypt);
 	}
 }
