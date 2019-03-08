@@ -1,6 +1,7 @@
 pragma solidity ^0.4.24;
 
-import "../IPMemory.sol";
+import "./IPMemory.sol";
+import "remix_tests.sol";
 
 contract MemoryTest {
 	IPMemory mem;
@@ -14,48 +15,52 @@ contract MemoryTest {
 		mem = IPMemory(_mem);
 	}
 
-	function testUint() external returns(bool){
+	function testUint() external {
 		string memory k = "test uint Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeUint(_key,2310);
-		return 2310 == mem.getUint(_key);
+		Assert.equal(2310,mem.getUint(_key),"Wrong store key");
 	}
 
 	function testString() external returns(bool){
 		string memory k = "test string Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeString(_key,"String tested");
-		return keccak256(abi.encodePacked("String tested")) == keccak256(abi.encodePacked(mem.getString(_key)));
+		bytes32 b1 = keccak256(abi.encodePacked(mem.getString(_key)));
+		bytes32 b2 = keccak256(abi.encodePacked("String tested"));
+		Assert.equal(b1,b2,"Wrong store string");
 	}
 
-	function testBool() external returns(bool){
+	function testBool() external {
 		string memory k = "test bool Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeBool(_key,true);
-		return mem.getBool(_key);
+		Assert.equal(true,mem.getBool(_key),"Wrong store bool");
 	}
 
-	function testBytes32() external returns(bool) {
+	function testBytes32() external {
 		string memory k = "test bytes32 Memory";
 		string memory tmp = "expected result";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		bytes32 _val = keccak256(abi.encodePacked(tmp));
 		mem.storeBytes32(_key,_val);
-		return _val == mem.getBytes32(_key);
+		Assert.equal(_val,mem.getBytes32(_key),"Wrong store bytes23");
 	}
 
-	function testAddress() external returns(bool){
+	function testAddress() external {
 		string memory k = "test address Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
-		mem.storeAddress(_key,address(0));
-		return address(0) == mem.getAddress(_key);
+		address a = 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c;
+		mem.storeAddress(_key,a);
+		Assert.equal(a,mem.getAddress(_key),"Wrong store address");
 	}
 
-	function run() external {
-		result = this.testAddress() && this.testBytes32() && this.testBool() && this.testString() && this.testUint();
-	}
 
-	function getResult() external view returns(bool) {
-		return result;
+	function test() external {
+		this.testUint();
+		this.testString();
+		this.testBool();
+		this.testBytes32();
+		this.testAddress();
 	}
 }

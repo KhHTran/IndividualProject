@@ -1,13 +1,13 @@
 pragma solidity ^0.4.24;
 
-import "../MemberManager.sol";
-import "../IPMemory.sol";
+import "./MemberManager.sol";
+import "./IPMemory.sol";
+import "remix_tests.sol";
 
-contract MemberTest {
+contract PrimaryMemberTest {
 	MemberManager memMan;
 	IPMemory mem;
 	address owner = msg.sender;
-	bool result;
 
 	modifier onlyOwner() {
 		require(msg.sender == owner, "Not authorised");
@@ -19,34 +19,22 @@ contract MemberTest {
 		mem = IPMemory(_memoryAddress);
 	}
 
-	function testRegisterMemberAndGetData() external returns(bool){
-		address _member = address(0);
-		string memory _metadata = "Metadata for test member 0x0";
+	function testRegisterMemberAndGetData() external {
+		string memory _metadata = "Metadata for test member";
 		bytes32 _metaHash = keccak256(abi.encodePacked(_metadata));
-		memMan.registerMember(_member,"Primary",_metadata);
-		bytes32 _key = keccak256(abi.encodePacked(_member,"Primary"));
-		bool x = 1 == mem.getUint(_key);
-		_key = keccak256(abi.encodePacked(_member,"Primary","Metadata"));
-		bool y = _metaHash == keccak256(abi.encodePacked(mem.getString(_key)));
-		x = x && y;
-		y = _metaHash == keccak256(abi.encodePacked(memMan.getMemberData(address(0),"Primary")));
-		x = x && y;
-		return x;
+	    memMan.registerMember(msg.sender,"Primary",_metadata);
+		string memory s = "Primary";
+		bytes32 _key = keccak256(abi.encodePacked(msg.sender,s));
+		Assert.equal(mem.getUint(_key),1,"User-type not marked in memory");
+		bytes32 result = keccak256(abi.encodePacked(memMan.getMemberData(msg.sender,"Primary")));
+		Assert.equal(_metaHash,result,"Get Member Data is incorrect");
 	}
 
-	function testUpdateMember() external returns(bool){
-		string memory _metadata = "New _metadata for test member 0x0";
+	function testUpdateMember() external {
+		string memory _metadata = "New _metadata for test member";
 		bytes32 _metaHash = keccak256(abi.encodePacked(_metadata));
-		memMan.updataMemberData(address(0),"Primary",_metadata);
-		bool x = _metaHash == keccak256(abi.encodePacked(memMan.getMemberData(address(0),"Primary")));
-		return x;
-	}
-
-	function runTests() external {
-		result = this.testRegisterMemberAndGetData() && this.testUpdateMember();
-	}
-
-	function getResult() external view returns(bool) {
-		return result;
+		memMan.updataMemberData(msg.sender,"Primary",_metadata);
+		bytes32 result = keccak256(abi.encodePacked(memMan.getMemberData(msg.sender,"Primary")));
+		Assert.equal(_metaHash,result,"Get Member Data is incorrect");
 	}
 }
