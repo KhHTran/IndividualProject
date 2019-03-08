@@ -7,7 +7,6 @@ contract MemberManager {
 	address owner = msg.sender;
 	bytes32 constant primaryHash = keccak256(abi.encodePacked("Primary"));
 	bytes32 constant secondaryHash = keccak256(abi.encodePacked("Secondary"));
-	event MemberRegistered(address _member, string _type);
 
 	modifier onlyOwner() {
 		require(msg.sender == owner,"Can only performed by owner");
@@ -34,22 +33,16 @@ contract MemberManager {
 		return keccak256(abi.encodePacked(_address,_string));
 	}
 
-	function registerMember(string _type, string _memberID ,string _metadata) 
+	function registerMember(address _member,string _type,string _metadata) 
 	external
 	memberNotRegistered(msg.sender,_type) {
 	    bytes32 hash = keccak256(abi.encodePacked(_type));
 		require(hash == primaryHash || hash == secondaryHash,"Member type should be Primary or Secondary");
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
-		require(bytes(_memberID).length > 0, "member ID needed to be provided");
-		bytes32 crypt = encrypt(msg.sender,_type);
+		bytes32 crypt = encrypt(_member,_type);
 		mem.storeUint(crypt,1);
-		crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
+		crypt = keccak256(abi.encodePacked(_member,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
-		crypt = keccak256(abi.encodePacked(msg.sender,_type,"Member ID"));
-		mem.storeString(crypt,_memberID);
-		crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
-		mem.storeAddress(crypt,msg.sender);
-		emit MemberRegistered(msg.sender,_type);
 	}
 
 	function getMemberData(address _member, string _type) external view
@@ -58,17 +51,11 @@ contract MemberManager {
 		return mem.getString(crypt);
 	}
 
-	function updataMemberData(string _type, string _metadata) 
+	function updataMemberData(address _member, string _type, string _metadata) 
 	external 
-	memberRegistered(msg.sender,_type) {
+	memberRegistered(_member,_type) {
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
-		bytes32 crypt = keccak256(abi.encodePacked(msg.sender,_type,"Metadata"));
+		bytes32 crypt = keccak256(abi.encodePacked(_member,_type,"Metadata"));
 		mem.storeString(crypt,_metadata);
-	}
-
-	function getMemberAddress(string _memberID) internal view returns(address) {
-		require(bytes(_memberID).length > 0, "member ID needed to be provided");
-		bytes32 crypt = keccak256(abi.encodePacked("Member ID",_memberID,"Member Address"));
-		return mem.getAddress(crypt);
 	}
 }

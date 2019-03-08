@@ -11,8 +11,8 @@ contract Token {
 		_;
 	}
 
-	modifier sufficientBalance(uint _amount) {
-		require(this.getBalance(msg.sender) > this.getTotalBooking(msg.sender) + _amount, "Insufficient funds");
+	modifier sufficientBalance(address _member, uint _amount) {
+		require(this.getBalance(_member) > this.getTotalBooking(_member) + _amount, "Insufficient funds");
 		_;
 	}
 
@@ -25,34 +25,34 @@ contract Token {
 		return mem.getUint(_key);
 	}
 
-	function transfer(address _receiver, uint _amount) external sufficientBalance(_amount) {
+	function transfer(address _sender, address _receiver, uint _amount) external sufficientBalance(_sender,_amount) {
 		require(_amount > 0, "transfer amount is negative");
-		uint balance = this.getBalance(msg.sender);
-		bytes32 _key = keccak256(abi.encodePacked(msg.sender,"Token Balance of User"));
+		uint balance = this.getBalance(_sender);
+		bytes32 _key = keccak256(abi.encodePacked(_sender,"Token Balance of User"));
 		mem.storeUint(_key,balance - _amount);
 		balance = this.getBalance(_receiver);
 		_key = keccak256(abi.encodePacked(_receiver,"Token Balance of User"));
 		mem.storeUint(_key,balance + _amount);
 	}
 
-	function deposit(uint _amount) external {
+	function deposit(address _member, uint _amount) external {
 		require(_amount > 0, "deposit amount is negative");
-		uint balance = this.getBalance(msg.sender);
-		bytes32 _key = keccak256(abi.encodePacked(msg.sender,"Token Balance of User"));
+		uint balance = this.getBalance(_member);
+		bytes32 _key = keccak256(abi.encodePacked(_member,"Token Balance of User"));
 		mem.storeUint(_key,balance + _amount);	
 	}
 
-	function withdraw(uint _amount) external sufficientBalance(_amount) {
+	function withdraw(address _member, uint _amount) external sufficientBalance(_member,_amount) {
 		require(_amount > 0, "withdraw amount is negative");
-		uint balance = this.getBalance(msg.sender);
-		bytes32 _key = keccak256(abi.encodePacked(msg.sender,"Token Balance of User"));
+		uint balance = this.getBalance(_member);
+		bytes32 _key = keccak256(abi.encodePacked(_member,"Token Balance of User"));
 		mem.storeUint(_key,balance - _amount);	
 	}
 
-	function bookToken(uint _amount) external sufficientBalance(_amount){
+	function bookToken(address _member,uint _amount) external sufficientBalance(_member,_amount){
 		require(_amount > 0, "booking amount is negative");
-		uint booking = this.getTotalBooking(msg.sender);
-		bytes32 _key = keccak256(abi.encodePacked(msg.sender,"Token Booking Amount of User"));
+		uint booking = this.getTotalBooking(_member);
+		bytes32 _key = keccak256(abi.encodePacked(_member,"Token Booking Amount of User"));
 		mem.storeUint(_key, booking + _amount);
 	}
 

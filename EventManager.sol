@@ -250,7 +250,8 @@ contract EventManager {
 		require(_bid > currentPrice, "Resell price need to be > current bidding price");
 		require(!ticketOwnership(_eventID,_ticketID,msg.sender),"Owner cannot place bid");
 		require(bidder != msg.sender, "Highest bidder cannot rebid");
-		token.bookToken(_bid);
+		token.bookToken(msg.sender,_bid);
+		token.freeBooking(bidder,currentPrice);
 		bytes32 _key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bidder"));
 		mem.storeAddress(_key,msg.sender);
 		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bid"));
@@ -272,8 +273,8 @@ contract EventManager {
 			require(msg.sender == bidder, "Only winner can close this auction");
 			bytes32 crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
 			address oldOwner = mem.getAddress(crypt);
-			token.transfer(oldOwner,currentPrice);
 			token.freeBooking(msg.sender,currentPrice);
+			token.transfer(msg.sender,oldOwner,currentPrice);
 			crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
 			mem.storeAddress(crypt,msg.sender);
 			crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
