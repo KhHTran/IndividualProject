@@ -113,13 +113,15 @@ contract EventManager {
 		return mem.getUint(crypt);
 	}
 
-	function registerEvent(string _name, string _url, uint _start, uint _end, uint _ticketPrice, bytes _signature)
+	function getEventCount(uint _eventID) public view returns(uint) {
+		return countEvent;
+	}
+
+	function registerEvent(string _name, string _url, uint _start, uint _end, uint _ticketPrice)
 	external onlyPrimary() legalEventTime(_start,_end) {
-		
+		require(bytes(_name).length > 0 && bytes(_url).length > 0, "signature and url cannot be empty");
 		require(_ticketPrice < 0, "Ticket price is negative");
 		bytes32 eventHash = keccak256(abi.encodePacked(_name,_url,_start,_end,_ticketPrice));
-		address signer = getSigner(eventHash,_signature);
-		require(msg.sender == signer, "Signer is not sender");
 		bytes32 _key = keccak256(abi.encodePacked(eventHash,"Event Active Status"));
 		require(mem.getUint(_key) == 0, "Event existed");
 		mem.storeUint(_key,1);
@@ -180,14 +182,11 @@ contract EventManager {
 		return mem.getUint(_key) == 1;
 	}
 
-	function buyTicket(uint _eventID, string _ticketData, bytes _signature) external 
+	function buyTicket(uint _eventID, string _ticketData) external 
 	eventInTrading(_eventID)
 	{
 		require(mem.getUint(encrypt(msg.sender,"Secondary")) == 1,"Buyer is not registered");
 		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,_ticketData)));
-		bytes32 ticketHash = keccak256(abi.encodePacked(_eventID,_ticketData));
-		address signer = getSigner(ticketHash, _signature);
-		require(msg.sender == signer, "Signer is not sender");
 		require(!activeTicket(_eventID,_ticketID),"ticket is already active");
 		bytes32 _key = keccak256(abi.encodePacked("Event-Ticket",_eventID,_ticketID));
 		mem.storeUint(_key,1);
@@ -200,13 +199,14 @@ contract EventManager {
 	    return mem.getUint(crypt) != 0;
 	}
 
-	function listTicketForAuction(uint _eventID, uint _ticketID, uint _minimumPrice, bytes _signature) external
+	function getAuctionCount() public view returns(uint) {
+		return countAuction;
+	}
+
+	function listTicketForAuction(uint _eventID, uint _ticketID, uint _minimumPrice) external
 	eventInTrading(_eventID) 
 	ticketNotListed(_eventID,_ticketID) {
-		bytes32 listHash = keccak256(abi.encodePacked(_ticketID,_eventID));
-		address signer = getSigner(listHash,_signature);
 		uint current = now;
-		require(signer == msg.sender, "Signer is not sender");
 		require(ticketOwnership(_ticketID,_eventID,msg.sender),"Sender is not ticket owner");
 		require(_minimumPrice > 0 && _minimumPrice < getTicketPrice(_eventID), "Minimum price is not legal");
 		require(current + auctionTime*24*3600 < getEventCloseTime(_eventID), "Not sufficient time for auction");
@@ -305,25 +305,5 @@ contract EventManager {
 		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bid"));
 		address bidder = mem.getAddress(crypt);
 		return (bid,bidder);
-	}
-
-	function getSigner(bytes32 _hash, bytes _signature) internal pure returns(address) {
-		bytes32 _ethSigned = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", _hash));
-		bytes32 r;
-		bytes32 s;
-		uint8 v;
-		if(_signature.length != 65) {
-			return address(0);
-		}
-		assembly {
-			r := mload(add(_signature,32))
-			s := mload(add(_signature,64))
-			v := byte(0, mload(add(_signature, 96)))
-		}
-		if(v < 27) {
-			v += 27;
-		}
-		require(v == 27 || v == 28, "Illegal signature version");
-		return ecrecover(_ethSigned,v,r,s);
 	}
 }
