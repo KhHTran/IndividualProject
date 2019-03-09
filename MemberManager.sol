@@ -35,7 +35,7 @@ contract MemberManager {
 
 	function registerMember(address _member,string _type,string _metadata) 
 	external
-	memberNotRegistered(msg.sender,_type) {
+	memberNotRegistered(_member,_type) {
 	    bytes32 hash = keccak256(abi.encodePacked(_type));
 		require(hash == primaryHash || hash == secondaryHash,"Member type should be Primary or Secondary");
 		require(bytes(_metadata).length > 0, "Data needed to be provided");
