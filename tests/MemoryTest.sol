@@ -19,7 +19,7 @@ contract MemoryTest {
 		string memory k = "test uint Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeUint(_key,2310);
-		Assert.equal(2310,mem.getUint(_key),"Wrong store key");
+		Assert.equal(2310,mem.getUint(_key),"Test store key");
 	}
 
 	function testString() external returns(bool){
@@ -28,14 +28,14 @@ contract MemoryTest {
 		mem.storeString(_key,"String tested");
 		bytes32 b1 = keccak256(abi.encodePacked(mem.getString(_key)));
 		bytes32 b2 = keccak256(abi.encodePacked("String tested"));
-		Assert.equal(b1,b2,"Wrong store string");
+		Assert.equal(b1,b2,"Test store string");
 	}
 
 	function testBool() external {
 		string memory k = "test bool Memory";
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		mem.storeBool(_key,true);
-		Assert.equal(true,mem.getBool(_key),"Wrong store bool");
+		Assert.equal(true,mem.getBool(_key),"Test store bool");
 	}
 
 	function testBytes32() external {
@@ -44,7 +44,7 @@ contract MemoryTest {
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		bytes32 _val = keccak256(abi.encodePacked(tmp));
 		mem.storeBytes32(_key,_val);
-		Assert.equal(_val,mem.getBytes32(_key),"Wrong store bytes23");
+		Assert.equal(_val,mem.getBytes32(_key),"Test store bytes23");
 	}
 
 	function testAddress() external {
@@ -52,7 +52,7 @@ contract MemoryTest {
 		bytes32 _key = keccak256(abi.encodePacked(k));
 		address a = 0x14723a09acff6d2a60dcdf7aa4aff308fddc160c;
 		mem.storeAddress(_key,a);
-		Assert.equal(a,mem.getAddress(_key),"Wrong store address");
+		Assert.equal(a,mem.getAddress(_key),"Test store address");
 	}
 
 

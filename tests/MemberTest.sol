@@ -4,7 +4,7 @@ import "./MemberManager.sol";
 import "./IPMemory.sol";
 import "remix_tests.sol";
 
-contract PrimaryMemberTest {
+contract MemberTest {
 	MemberManager memMan;
 	IPMemory mem;
 	address owner = msg.sender;
@@ -36,5 +36,45 @@ contract PrimaryMemberTest {
 		memMan.updataMemberData(msg.sender,"Primary",_metadata);
 		bytes32 result = keccak256(abi.encodePacked(memMan.getMemberData(msg.sender,"Primary")));
 		Assert.equal(_metaHash,result,"Get Member Data is incorrect");
+	}
+
+	function testMemberNotRegisteredRevert() external { 
+	    ThrowProxy throwproxy = new ThrowProxy(address(memMan)); 
+	    MemberManager(address(throwproxy)).registerMember(msg.sender,"Primary","New _metadata for test member");
+	    bool r = throwproxy.execute.gas(200000)(); 
+	    Assert.equal(false, r, "Should be false because revert!");
+	}
+	
+	function testMemberRegisteredRevert() external { 
+	    ThrowProxy throwproxy = new ThrowProxy(address(memMan)); 
+	    MemberManager(address(throwproxy)).updataMemberData(msg.sender,"Secondary","New _metadata for test member");
+	    bool r = throwproxy.execute.gas(200000)(); 
+	    Assert.equal(false, r, "Should be false because revert!");
+	}
+	
+	function testIncorrectMemberTypeRevert() external { 
+	    ThrowProxy throwproxy = new ThrowProxy(address(memMan)); 
+	    MemberManager(address(throwproxy)).registerMember(msg.sender,"Example","New _metadata for test member");
+	    bool r = throwproxy.execute.gas(200000)(); 
+	    Assert.equal(false, r, "Should be false because revert!");
+	}
+}
+
+// Proxy contract for testing throws
+contract ThrowProxy {
+	address public target;
+	bytes data;
+
+	function ThrowProxy(address _target) {
+		target = _target;
+	}
+
+	//prime the data using the fallback function.
+	function() {
+		data = msg.data;
+	}
+
+	function execute() returns (bool) {
+		return target.call(data);
 	}
 }
