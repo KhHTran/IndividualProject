@@ -25,9 +25,9 @@ contract MemberTest {
 	    memMan.registerMember(msg.sender,"Primary",_metadata);
 		string memory s = "Primary";
 		bytes32 _key = keccak256(abi.encodePacked(msg.sender,s));
-		Assert.equal(mem.getUint(_key),1,"User-type not marked in memory");
+		Assert.equal(mem.getUint(_key),1,"User-type storing test");
 		bytes32 result = keccak256(abi.encodePacked(memMan.getMemberData(msg.sender,"Primary")));
-		Assert.equal(_metaHash,result,"Get Member Data is incorrect");
+		Assert.equal(_metaHash,result,"Get Member Data test");
 	}
 
 	function testUpdateMember() external {
@@ -35,14 +35,14 @@ contract MemberTest {
 		bytes32 _metaHash = keccak256(abi.encodePacked(_metadata));
 		memMan.updataMemberData(msg.sender,"Primary",_metadata);
 		bytes32 result = keccak256(abi.encodePacked(memMan.getMemberData(msg.sender,"Primary")));
-		Assert.equal(_metaHash,result,"Get Member Data is incorrect");
+		Assert.equal(_metaHash,result,"Get Member Data test");
 	}
 
 	function testMemberNotRegisteredRevert() external { 
 	    ThrowProxy throwproxy = new ThrowProxy(address(memMan)); 
 	    MemberManager(address(throwproxy)).registerMember(msg.sender,"Primary","New _metadata for test member");
 	    bool r = throwproxy.execute.gas(200000)(); 
-	    Assert.equal(false, r, "Should be false because revert!");
+	    Assert.equal(false, r, "member not registered revert test");
 	}
 	
 	function testMemberRegisteredRevert() external { 
