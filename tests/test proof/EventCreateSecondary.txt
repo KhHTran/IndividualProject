@@ -1,0 +1,14 @@
+[
+	{
+		"from": "0x08970fed061e7747cd9a38d680a601510cb659fb",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Secondary user cannot create event",
+			"passed": true,
+			"message": "Secondary user cannot create event",
+			"length": 2
+		}
+	}
+]
