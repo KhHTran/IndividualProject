@@ -1,0 +1,26 @@
+[
+	{
+		"from": "0xdc04977a2078c8ffdf086d618d1f961b6c546222",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test Ticket Owner",
+			"passed": true,
+			"message": "Test Ticket Owner",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xdc04977a2078c8ffdf086d618d1f961b6c546222",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test Ticket Data",
+			"passed": true,
+			"message": "Test Ticket Data",
+			"length": 2
+		}
+	}
+]
