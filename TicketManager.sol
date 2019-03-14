@@ -29,7 +29,7 @@ contract TicketManager {
 	}
 
 	function ticketOwnership(uint _eventID, uint _ticketID, address _owner) public view returns(bool) {
-		bytes32 crypt = keccak256(abi.encodePacked("Event Ticket Owner",_eventID,_ticketID));
+		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Event Ticket Owner"));
 		return _owner == mem.getAddress(crypt);
 	}
 
@@ -49,6 +49,8 @@ contract TicketManager {
 		mem.storeUint(_key,1);
 		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Event Ticket Owner"));
 		mem.storeAddress(_key,_sender);
+		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Event Ticket Ticket Metadata"));
+		mem.storeString(_key,_ticketData);
 	}
 	
 	function ticketListing(uint _eventID, uint _ticketID) internal view returns(bool) {
@@ -61,9 +63,9 @@ contract TicketManager {
 		uint current = now;
 		bytes32 c = keccak256(abi.encodePacked("Auction Library Auction Time Limit"));
 		uint auctionTime = mem.getUint(c);
-		require(ticketListing(_eventID,_ticketID), "Ticket is already in listing");
+		require(!ticketListing(_eventID,_ticketID), "Ticket is already in listing");
 		require(eventMan.getEventStatus(_eventID) == 2,"Event need to be in trading");
-		require(ticketOwnership(_ticketID,_eventID,_sender),"Sender is not ticket owner");
+		require(ticketOwnership(_eventID,_ticketID,_sender),"Sender is not ticket owner");
 		require(_minimumPrice > 0 && _minimumPrice < eventMan.getTicketPrice(_eventID), "Minimum price is not legal");
 		require(current + auctionTime*24*3600 < eventMan.getEventCloseTime(_eventID), "Not sufficient time for auction");
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
