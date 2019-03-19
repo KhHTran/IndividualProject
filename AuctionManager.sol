@@ -45,7 +45,7 @@ contract AuctionManager {
 		if(mem.getUint(crypt) == 0) {
 			return AuctionStatus.Closed;
 		}
-		if(current > _start + auctionTime*24*3600) {
+		if(current > _start + auctionTime*3600) {
 			return AuctionStatus.Ended;
 		}
 		return AuctionStatus.Active;
