@@ -24,6 +24,8 @@ contract AuctionManager {
 		eventMan = EventManager(e);
 		ticketMan = TicketManager(t);
 		token = Token(to);
+		bytes32 crypt = keccak256(abi.encodePacked("Auction Library Auction Time Limit"));
+		mem.storeUint(crypt,uint(2));
 	}
 
 	function setAuctionTimeLimit(uint lim) external onlyOwner {
