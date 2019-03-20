@@ -63,18 +63,20 @@ contract AuctionManager {
 		require(!ticketMan.ticketOwnership(_eventID,_ticketID,_sender),"Owner cannot place bid");
 		require(bidder != _sender, "Highest bidder cannot rebid");
 		token.bookToken(_sender,_bid);
-		token.freeBooking(bidder,currentPrice);
-		bytes32 _key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bidder"));
-		mem.storeAddress(_key,_sender);
-		_key = keccak256(abi.encodePacked(_eventID,_ticketID,"Auction Highest Bid"));
-		mem.storeUint(_key,_bid);
+		if(!ticketMan.ticketOwnership(_eventID,_ticketID,bidder)) {
+			token.freeBooking(bidder,currentPrice);
+		}
+		bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bidder"));
+		mem.storeAddress(crypt,_sender);
+		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bid"));
+		mem.storeUint(crypt,_bid);
 	}
 
 	function endAuction(address _sender, uint _auctionID) external {
 		require(getAuctionStatus(_auctionID) == AuctionStatus.Active, "Auction no longer active");
 		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
 		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
-		require(bidder == _sender && ticketMan.ticketOwnership(_eventID,_ticketID,_sender), "Only owner/bids were placed" );
+		require(bidder == _sender || ticketMan.ticketOwnership(_eventID,_ticketID,_sender), "Only owner/bids were placed" );
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
 		mem.storeUint(crypt,0);
 		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Active Status"));
@@ -116,9 +118,9 @@ contract AuctionManager {
 	}
 	
 	function getAuctionData(uint _auctionID) internal view returns(uint,address) {
-		bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bidder"));
+		bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bid"));
 		uint bid = mem.getUint(crypt);
-		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bid"));
+		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Highest Bidder"));
 		address bidder = mem.getAddress(crypt);
 		return (bid,bidder);
 	}
