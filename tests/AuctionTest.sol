@@ -36,8 +36,9 @@ contract AuctionTest {
 		mem.storeUint(crypt,1);
 		token.deposit(owner,200);
 		token.deposit(buyer,200);
-		while(now < current + 7) {
-		}
+	}
+
+	function setUp() external {
 		string memory meta = "Ticket Metadata 1234567890";
 		ticketM.buyTicket(owner,eventID,meta);
 		ticketID = uint(keccak256(abi.encodePacked(eventID,meta)));
@@ -60,6 +61,7 @@ contract AuctionTest {
 
 	function test2() external {
 	    ticketM.listTicketForAuction(owner,eventID,ticketID,50);
+	    auctionId += 1;
 		ThrowProxy throwproxy = new ThrowProxy(address(auctionM));
 		AuctionManager(address(throwproxy)).placeBids(owner,auctionID,80);
 		bool r = throwproxy.execute.gas(200000)();
