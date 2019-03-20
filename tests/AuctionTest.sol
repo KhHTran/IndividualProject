@@ -58,15 +58,16 @@ contract AuctionTest {
 		Assert.equal(mem.getUint(crypt),uint(0),"Test listing status of ticket");
 	}
 
-	function test2() external {		ticketM.listTicketForAuction(owner,eventID,ticketID);
+	function test2() external {
+	    ticketM.listTicketForAuction(owner,eventID,ticketID,50);
 		ThrowProxy throwproxy = new ThrowProxy(address(auctionM));
 		AuctionManager(address(throwproxy)).placeBids(owner,auctionID,80);
 		bool r = throwproxy.execute.gas(200000)();
 		Assert.equal(r,false,"Owner bid for auction revert");
 		AuctionManager(address(throwproxy)).placeBids(buyer,auctionID,40);
-		bool r = throwproxy.execute.gas(200000)();
+		r = throwproxy.execute.gas(200000)();
 		Assert.equal(r,false,"bid not high enough auction revert");
-		ticketM.placeBids(buyer,auctionID,60);
+		auctionM.placeBids(buyer,auctionID,60);
 		bytes32 _key = keccak256(abi.encodePacked(auctionID,"Auction ID Highest Bidder"));
 		Assert.equal(buyer,mem.getAddress(_key),"Test default highest bidder of auction");
 		_key = keccak256(abi.encodePacked(auctionID,"Auction ID Highest Bid"));
