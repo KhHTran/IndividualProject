@@ -1,0 +1,62 @@
+[
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Owner bid for auction revert",
+			"passed": true,
+			"message": "Owner bid for auction revert",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "bid not high enough auction revert",
+			"passed": true,
+			"message": "bid not high enough auction revert",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test default highest bidder of auction",
+			"passed": true,
+			"message": "Test default highest bidder of auction",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test default highest bidder of auction",
+			"passed": true,
+			"message": "Test default highest bidder of auction",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test booking after bid",
+			"passed": true,
+			"message": "Test booking after bid",
+			"length": 2
+		}
+	}
+]

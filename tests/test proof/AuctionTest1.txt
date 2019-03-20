@@ -1,0 +1,38 @@
+[
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test end auction revert. Not owner of ticket",
+			"passed": true,
+			"message": "Test end auction revert. Not owner of ticket",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test auction active status",
+			"passed": true,
+			"message": "Test auction active status",
+			"length": 2
+		}
+	},
+	{
+		"from": "0xec5bee2dbb67da8757091ad3d9526ba3ed2e2137",
+		"topic": "0xe81a864f5996ae49db556bf6540209c15b8077395a85ede9dfa17ad07d9ff366",
+		"event": "AssertionEvent",
+		"args": {
+			"0": true,
+			"1": "Test listing status of ticket",
+			"passed": true,
+			"message": "Test listing status of ticket",
+			"length": 2
+		}
+	}
+]
