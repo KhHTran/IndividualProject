@@ -67,7 +67,7 @@ contract TicketManager {
 		require(eventMan.getEventStatus(_eventID) == 2,"Event need to be in trading");
 		require(ticketOwnership(_eventID,_ticketID,_sender),"Sender is not ticket owner");
 		require(_minimumPrice > 0 && _minimumPrice < eventMan.getTicketPrice(_eventID), "Minimum price is not legal");
-		require(current + auctionTime*24*3600 < eventMan.getEventCloseTime(_eventID), "Not sufficient time for auction");
+		require(current + auctionTime*3600 < eventMan.getEventCloseTime(_eventID), "Not sufficient time for auction");
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
 		mem.storeUint(crypt,1);
 		uint auctionID = getAuctionCount();
