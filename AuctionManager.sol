@@ -55,7 +55,7 @@ contract AuctionManager {
 
 	function placeBids(address _sender, uint _auctionID, uint _bid) external {
 		require(getAuctionStatus(_auctionID) == AuctionStatus.Active, "Auction no longer active");
-		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		(uint _eventID, bytes32 _ticketID) = getAuctionEventTicket(_auctionID);
 		uint maxPrice = eventMan.getTicketPrice(_eventID);
 		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
 		require(_bid < maxPrice, "Resell price can not be >= original price");
@@ -75,7 +75,7 @@ contract AuctionManager {
 	function endAuction(address _sender, uint _auctionID) external {
 		require(getAuctionStatus(_auctionID) == AuctionStatus.Active, "Auction no longer active");
 		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
-		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		(uint _eventID, bytes32 _ticketID) = getAuctionEventTicket(_auctionID);
 		require(bidder == _sender || ticketMan.ticketOwnership(_eventID,_ticketID,_sender), "Only owner/bids were placed" );
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
 		mem.storeUint(crypt,0);
@@ -85,7 +85,7 @@ contract AuctionManager {
 
 	function finishAuction(address _sender, uint _auctionID) external {
 		require(getAuctionStatus(_auctionID) == AuctionStatus.Ended, "Auction not ended");
-		(uint _eventID, uint _ticketID) = getAuctionEventTicket(_auctionID);
+		(uint _eventID, bytes32 _ticketID) = getAuctionEventTicket(_auctionID);
 		(uint currentPrice, address bidder) = getAuctionData(_auctionID);
 		if(!ticketMan.ticketOwnership(_eventID,_ticketID,bidder)) {
 			require(_sender == bidder, "Only winner can close this auction");
@@ -109,11 +109,11 @@ contract AuctionManager {
 		}
 	}
 	
-	function getAuctionEventTicket(uint _auctionID) internal view returns(uint,uint) {
+	function getAuctionEventTicket(uint _auctionID) internal view returns(uint,bytes32) {
 		bytes32 crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Event ID"));
 		uint _eventID = mem.getUint(crypt);
 		crypt = keccak256(abi.encodePacked(_auctionID,"Auction ID Ticket ID"));
-		uint _ticketID = mem.getUint(crypt);
+		bytes32 _ticketID = mem.getBytes32(crypt);
 		return (_eventID,_ticketID);
 	}
 	

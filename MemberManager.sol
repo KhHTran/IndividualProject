@@ -32,6 +32,10 @@ contract MemberManager {
 	function encrypt(address _address, string _string) internal pure returns(bytes32) {
 		return keccak256(abi.encodePacked(_address,_string));
 	}
+	
+	function isPrimary(address _address) internal view returns(uint) {
+	    return mem.getUint(keccak256(abi.encodePacked(_address,"Primary")));
+	}
 
 	function registerMember(address _member,string _type,string _metadata) 
 	external

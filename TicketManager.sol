@@ -28,22 +28,21 @@ contract TicketManager {
 		mem.storeUint(crypt,val);
 	}
 
-	function ticketOwnership(uint _eventID, uint _ticketID, address _owner) public view returns(bool) {
+	function ticketOwnership(uint _eventID, bytes32 _ticketID, address _owner) public view returns(bool) {
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Event Ticket Owner"));
 		return _owner == mem.getAddress(crypt);
 	}
 
-	function activeTicket(uint _eventID, uint _ticketID) internal view returns(bool) {
+	function activeTicket(uint _eventID, bytes32 _ticketID) internal view returns(bool) {
 		bytes32 _key = keccak256(abi.encodePacked("Event-Ticket",_eventID,_ticketID));
 		return mem.getUint(_key) == 1;
 	}
 
-	function buyTicket(address _sender, uint _eventID, string _ticketData) external 
-	{
+	function buyTicket(address _sender, uint _eventID, string _ticketData) external {
 	    bytes32 crypt = keccak256(abi.encodePacked(_sender,"Secondary"));
 		require(eventMan.getEventStatus(_eventID) == 2,"Event need to be in trading");
 		require(mem.getUint(crypt) == 1,"Buyer is not registered");
-		uint _ticketID = uint(keccak256(abi.encodePacked(_eventID,_ticketData)));
+		bytes32 _ticketID = keccak256(abi.encodePacked(_eventID,_ticketData));
 		require(!activeTicket(_eventID,_ticketID),"ticket is already active");
 		bytes32 _key = keccak256(abi.encodePacked("Event-Ticket",_eventID,_ticketID));
 		mem.storeUint(_key,1);
@@ -53,13 +52,17 @@ contract TicketManager {
 		mem.storeString(_key,_ticketData);
 	}
 	
-	function ticketListing(uint _eventID, uint _ticketID) internal view returns(bool) {
+	function ticketListing(uint _eventID, bytes32 _ticketID) internal view returns(bool) {
 		require(eventMan.getEventStatus(_eventID) == 2,"Event need to be in trading");
 		bytes32 crypt = keccak256(abi.encodePacked(_eventID,_ticketID,"Ticket Event In Listing"));
 		return mem.getUint(crypt) != 0;
 	}
+	
+	function getTicketID(uint _eventID, string _ticketData) public pure returns(bytes32) {
+        return keccak256(abi.encodePacked(_eventID,_ticketData));	    
+	}
 
-	function listTicketForAuction(address _sender, uint _eventID, uint _ticketID, uint _minimumPrice) external {
+	function listTicketForAuction(address _sender, uint _eventID, bytes32 _ticketID, uint _minimumPrice) external {
 		uint current = now;
 		bytes32 c = keccak256(abi.encodePacked("Auction Library Auction Time Limit"));
 		uint auctionTime = mem.getUint(c);
@@ -82,7 +85,7 @@ contract TicketManager {
 		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Event ID"));
 		mem.storeUint(crypt,_eventID);
 		crypt = keccak256(abi.encodePacked(auctionID,"Auction ID Ticket ID"));
-		mem.storeUint(crypt,_ticketID);
+		mem.storeBytes32(crypt,_ticketID);
 		setAuctionCount(auctionID + 1);
 	}
 }

@@ -107,5 +107,22 @@ contract EventManager {
 		}
 		return 2;
 	}
+	
+	function getEventStatus0(uint _eventID) public view returns(uint,uint) {
+		uint currentTime = now;
+		uint eventClose = getEventCloseTime(_eventID);
+		uint eventStart = getEventOpenTime(_eventID);
+		bytes32 _key = keccak256(abi.encodePacked(getEventHash(_eventID),"Event Active Status"));
+		if (mem.getUint(_key) == 0) {
+			return (0,currentTime);
+		}
+		if (currentTime < eventStart) {
+			return (1,currentTime);
+		}
+		if (currentTime > eventClose) {
+			return (3,currentTime);
+		}
+		return (2,currentTime);
+	}
 
 }
